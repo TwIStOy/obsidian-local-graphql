@@ -1,8 +1,8 @@
 import { extendType, objectType } from "nexus";
-import { Vault } from "obsidian";
+import { TFile, Vault } from "obsidian";
 
 import { GraphQLObject } from "./base";
-import { TAbstractFileObject, TFolderObject } from "./file";
+import { TAbstractFileObject, TFileObject, TFolderObject } from "./file";
 import { Context } from "../context";
 
 export class VaultObject extends GraphQLObject<Vault> {
@@ -23,6 +23,32 @@ export class VaultObject extends GraphQLObject<Vault> {
 					path: "String",
 				},
 			});
+			t.nullable.string("fileContent", {
+				args: {
+					path: "String",
+				},
+			});
+			t.nullable.string("cachedFileContent", {
+				args: {
+					path: "String",
+				},
+			});
+			t.nullable.string("fileBinary", {
+				args: {
+					path: "String",
+				},
+			});
+			t.nullable.string("resourcePath", {
+				args: {
+					path: "String",
+				},
+			});
+			t.nonNull.list.field("allMarkdownFiles", {
+				type: "TFile",
+			});
+			t.nonNull.list.field("allFiles", {
+				type: "TFile",
+			});
 		},
 	});
 
@@ -42,7 +68,7 @@ export class VaultObject extends GraphQLObject<Vault> {
 		return new TFolderObject(this._ob.getRoot());
 	}
 
-	get allLoadedFiles() {
+	allLoadedFiles() {
 		let values = this._ob
 			.getAllLoadedFiles()
 			.map(TAbstractFileObject.fromObsidian);
@@ -55,6 +81,57 @@ export class VaultObject extends GraphQLObject<Vault> {
 			return TAbstractFileObject.fromObsidian(ob);
 		}
 		return null;
+	}
+
+	_fileFromPath(path: string) {
+		let ob = this._ob.getAbstractFileByPath(path);
+		if (ob && ob instanceof TFile) {
+			return ob;
+		}
+		return null;
+	}
+
+	fileContent(args: { path: string }) {
+		let ob = this._fileFromPath(args.path);
+		if (ob) {
+			return this._ob.read(ob);
+		}
+		return null;
+	}
+
+	async cachedFileContent(args: { path: string }) {
+		let ob = this._fileFromPath(args.path);
+		if (ob) {
+			return await this._ob.cachedRead(ob);
+		}
+		return null;
+	}
+
+	async fileBinary(args: { path: string }) {
+		let ob = this._fileFromPath(args.path);
+		if (ob) {
+			let data = await this._ob.readBinary(ob);
+			return Buffer.from(data).toString("base64");
+		}
+		return null;
+	}
+
+	resourcePath(args: { path: string }) {
+		let ob = this._fileFromPath(args.path);
+		if (ob) {
+			return this._ob.getResourcePath(ob);
+		}
+		return null;
+	}
+
+	allMarkdownFiles() {
+		let values = this._ob.getMarkdownFiles().map((f) => new TFileObject(f));
+		return values;
+	}
+
+	allFiles() {
+		let values = this._ob.getFiles().map((f) => new TFileObject(f));
+		return values;
 	}
 }
 
