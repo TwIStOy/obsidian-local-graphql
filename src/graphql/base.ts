@@ -1,5 +1,3 @@
-import { NexusObjectTypeDef } from "nexus/dist/core";
-
 /**
  * A GraphQL object that represents an Obsidian object.
  */

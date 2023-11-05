@@ -17,6 +17,12 @@ export class VaultObject extends GraphQLObject<Vault> {
 			t.nonNull.list.field("allLoadedFiles", {
 				type: "TAbstractFile",
 			});
+			t.nullable.field("abstractFileByPath", {
+				type: "TAbstractFile",
+				args: {
+					path: "String",
+				},
+			});
 		},
 	});
 
@@ -41,6 +47,14 @@ export class VaultObject extends GraphQLObject<Vault> {
 			.getAllLoadedFiles()
 			.map(TAbstractFileObject.fromObsidian);
 		return values;
+	}
+
+	abstractFileByPath(args: { path: string }) {
+		let ob = this._ob.getAbstractFileByPath(args.path);
+		if (ob) {
+			return TAbstractFileObject.fromObsidian(ob);
+		}
+		return null;
 	}
 }
 
