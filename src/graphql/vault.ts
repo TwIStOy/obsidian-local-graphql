@@ -100,7 +100,8 @@ export const VaultQuery = extendType({
 		t.nonNull.field("vault", {
 			type: "Vault",
 			resolve(_root, _args, ctx: Context) {
-				return new VaultObject(ctx.app.vault);
+				let obj = new VaultObject(ctx.app.vault);
+				return obj;
 			},
 		});
 	},
