@@ -13,18 +13,16 @@ import {
 import { schema } from "./schema";
 import { Context } from "./context";
 
-// Remember to rename these classes and interfaces!
-
-interface MyPluginSettings {
-	mySetting: string;
+export interface LocalGraphQLSettings {
+	httpPort: number;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: "default",
+const DEFAULT_SETTINGS: LocalGraphQLSettings = {
+	httpPort: 28123,
 };
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class LocalGraphQL extends Plugin {
+	settings: LocalGraphQLSettings;
 
 	async onload() {
 		await this.loadSettings();
@@ -142,26 +140,10 @@ export default class MyPlugin extends Plugin {
 	}
 }
 
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
+class LocalGraphQLSettingsTab extends PluginSettingTab {
+	plugin: LocalGraphQL;
 
-	onOpen() {
-		const { contentEl } = this;
-		contentEl.setText("Woah!");
-	}
-
-	onClose() {
-		const { contentEl } = this;
-		contentEl.empty();
-	}
-}
-
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
-
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: LocalGraphQL) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -171,17 +153,12 @@ class SampleSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		new Setting(containerEl)
-			.setName("Setting #1")
-			.setDesc("It's a secret")
-			.addText((text) =>
-				text
-					.setPlaceholder("Enter your secret")
-					.setValue(this.plugin.settings.mySetting)
-					.onChange(async (value) => {
-						this.plugin.settings.mySetting = value;
-						await this.plugin.saveSettings();
-					}),
-			);
+		new Setting(containerEl).setName("Server Port").addText((text) =>
+			text.onChange((value) => {
+				this.plugin.settings.httpPort = parseInt(value);
+				this.plugin.saveSettings();
+				this.plugin._restartServer();
+			}),
+		);
 	}
 }
