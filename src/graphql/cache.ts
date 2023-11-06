@@ -37,7 +37,7 @@ export const PosSchema = obObjectType<Pos>()({
 export const CacheItemSchema = obInterfaceType<CacheItem>()({
     name: "CacheItem",
     definition(t) {
-        t.field("position", "pos");
+        t.field("position", "Pos");
     },
 });
 

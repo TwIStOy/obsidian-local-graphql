@@ -1,34 +1,44 @@
 import { makeSchema } from "nexus";
 
 import {
-    FileStatsObject,
-    TAbstractFileObject,
-    TFileObject,
-    TFolderObject,
+	TAbstractFileSchema,
+	TFolderSchema,
+	TFileSchema,
+	FileStatsSchema,
 } from "./graphql/file";
-import { VaultObject, VaultQuery } from "./graphql/vault";
+import { VaultSchema, VaultQuery } from "./graphql/vault";
 import {
-    ReferenceCacheObject,
-    ReferenceObject,
-    CacheItemObject,
-    PosObject,
-    LocObject,
+	LocSchema,
+	PosSchema,
+	CacheItemSchema,
+	ReferenceSchema,
+	ReferenceCacheSchema,
+	LinkCacheSchema,
+	EmbedCacheSchema,
+	HeadingCacheSchema,
+	SectionCacheSchema,
+	ListItemCacheSchema,
 } from "./graphql/cache";
 
 export const schema = makeSchema({
-    types: [
-        // objects
-        VaultObject.schema,
-        TFolderObject.schema,
-        TFileObject.schema,
-        TAbstractFileObject.schema,
-        FileStatsObject.schema,
-        ReferenceCacheObject.schema,
-        ReferenceObject.schema,
-        CacheItemObject.schema,
-        PosObject.schema,
-        LocObject.schema,
-        // queries
-        VaultQuery,
-    ],
+	types: [
+		// objects
+		TAbstractFileSchema,
+		TFolderSchema,
+		TFileSchema,
+		FileStatsSchema,
+		LocSchema,
+		PosSchema,
+		CacheItemSchema,
+		ReferenceSchema,
+		ReferenceCacheSchema,
+		LinkCacheSchema,
+		EmbedCacheSchema,
+		HeadingCacheSchema,
+		SectionCacheSchema,
+		ListItemCacheSchema,
+		VaultSchema,
+		// queries
+		VaultQuery,
+	],
 });
