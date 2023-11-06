@@ -35,8 +35,8 @@ export const TFileSchema = obObjectType<TFile>()({
         t.field("stat", "FileStats");
         t.string("readContent", {
             nullable: false,
-            resolve: async (ob) => {
-                return await ob._ob.vault.read(ob._ob);
+            resolve: async (val) => {
+                return await val.vault.read(val);
             },
         });
         t.string("cachedreadContent");
@@ -46,22 +46,6 @@ export const TFileSchema = obObjectType<TFile>()({
 });
 
 export class TFileObject extends GraphQLObject<TFile> {
-    get stats() {
-        return new FileStatsObject(this._ob.stat);
-    }
-
-    get basename() {
-        return this._ob.basename;
-    }
-
-    get extension() {
-        return this._ob.extension;
-    }
-
-    async readContent() {
-        return await this._ob.vault.read(this._ob);
-    }
-
     async cachedreadContent() {
         return await this._ob.vault.cachedRead(this._ob);
     }
