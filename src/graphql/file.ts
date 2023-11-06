@@ -20,7 +20,9 @@ export const TAbstractFileSchema = obInterfaceType<TAbstractFile>()({
         t.string("name");
         t.string("path");
         t.field("vault", "Vault");
-        t.field("parent", "TFolder", true);
+        t.field("parent", "TFolder", {
+            nullable: true,
+        });
     },
 });
 
@@ -31,8 +33,11 @@ export const TFileSchema = obObjectType<TFile>()({
         t.string("basename");
         t.string("extension");
         t.field("stat", "FileStats");
-        t.custom("readContent", "string", async (ob) => {
-            return await ob._ob.vault.read(ob._ob);
+        t.string("readContent", {
+            nullable: false,
+            resolve: async (ob) => {
+                return await ob._ob.vault.read(ob._ob);
+            },
         });
         t.string("cachedreadContent");
         t.string("readBinaryContent");

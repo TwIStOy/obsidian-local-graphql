@@ -9,12 +9,25 @@ import {
 
 import { anyGraphQLObject, GraphQLObject } from "./base";
 
-export type ObOutputDefinitionBlockFieldDef<T, R> = {
-    nullable?: boolean;
-    resolve?: (ob: GraphQLObject<T>) => R;
-};
-
 type OutputBlockType = Omit<OutputDefinitionBlock<any>, "nonNull" | "nullable">;
+
+// type ResolverConfig<T, FieldName extends string, R> = FieldName extends Extract<
+//     keyof T,
+//     string
+// >
+//     ? {
+//           resolve?: ResolverType<T, R>;
+//       }
+//     : {
+//           resolve: ResolverType<T, R>;
+//       };
+
+
+export interface ObOutputDefinitionBlockFieldDef {}
+
+export type ObOutputDefinitionBlockFieldDef<T, FieldName extends string, R> = {
+    nullable?: boolean;
+} & ResolverConfig<T, FieldName, R>;
 
 export class ObOutputDefinitionBlock<T, TypeName extends string> {
     constructor(public t: OutputDefinitionBlock<any>) {}
@@ -26,28 +39,50 @@ export class ObOutputDefinitionBlock<T, TypeName extends string> {
         return this.t;
     }
 
-    public int<FieldName extends Extract<keyof T, string>>(
-        field: FieldName,
-        opts?: ObOutputDefinitionBlockFieldDef<T, number>
+    _isField(key: string, obj: T): key is Extract<keyof T, string> {
+        return key in obj;
+    }
+
+    _getResolve<FieldName extends string, R>(
+        name: FieldName,
+        opts?: ObOutputDefinitionBlockFieldDef<T, FieldName, R>,
+        wrapResult: boolean = false
     ) {
-        let resolve = opts
-            ? opts.resolve
-            : (ob: GraphQLObject<T>) => {
-                  return ob._ob[field];
-              };
+        return (ob: GraphQLObject<T>) => {
+            if (this._isField(name, ob._ob)) {
+                if (opts && opts.resolve) {
+                    return opts.resolve(ob);
+                }
+                if (wrapResult) {
+                    return anyGraphQLObject(ob._ob[name], name);
+                } else {
+                    return ob._ob[name];
+                }
+            } else {
+                if (!opts || !opts?.resolve) {
+                    throw new Error(
+                        `opts and resolve cannot be null if the field is not in the object.`
+                    );
+                }
+                return opts && opts.resolve(ob);
+            }
+        };
+    }
+
+    public int<FieldName extends string>(
+        field: FieldName,
+        opts?: ObOutputDefinitionBlockFieldDef<T, FieldName, number>
+    ) {
+        let resolve = this._getResolve(field, opts);
         let t = this._getBlock(opts);
         return t.int(field, { resolve: resolve });
     }
 
     public string<FieldName extends Extract<keyof T, string>>(
         field: FieldName,
-        opts?: ObOutputDefinitionBlockFieldDef<T, string>
+        opts?: ObOutputDefinitionBlockFieldDef<T, FieldName, string>
     ) {
-        let resolve = opts
-            ? opts.resolve
-            : (ob: GraphQLObject<T>) => {
-                  return ob._ob[field];
-              };
+        let resolve = this._getResolve(field, opts);
         let t = this._getBlock(opts);
         return t.string(field, { resolve: resolve });
     }
@@ -55,13 +90,9 @@ export class ObOutputDefinitionBlock<T, TypeName extends string> {
     public field<FieldName extends Extract<keyof T, string>>(
         field: FieldName,
         type: string,
-        opts?: ObOutputDefinitionBlockFieldDef<T, any>
+        opts?: ObOutputDefinitionBlockFieldDef<T, FieldName, any>
     ) {
-        let resolve = opts
-            ? opts.resolve
-            : (ob: GraphQLObject<T>): GraphQLObject<any> | null => {
-                  return anyGraphQLObject(ob._ob[field], type);
-              };
+        let resolve = this._getResolve(field, opts, true);
         let t = this._getBlock(opts);
         return t.field(field, { type: type, resolve: resolve });
     }

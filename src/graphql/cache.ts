@@ -95,7 +95,9 @@ export const SectionCacheSchema = obObjectType<SectionCache>()({
     name: "SectionCache",
     definition(t) {
         t.implements("CacheItem");
-        t.string("id", true);
+        t.string("id", {
+            nullable: true,
+        });
         t.string("type");
     },
 });
@@ -104,8 +106,12 @@ export const ListItemCacheSchema = obObjectType<ListItemCache>()({
     name: "ListItemCache",
     definition(t) {
         t.implements("CacheItem");
-        t.string("id", true);
-        t.string("task", true);
+        t.string("id", {
+            nullable: true,
+        });
+        t.string("task", {
+            nullable: true,
+        });
         t.int("parent");
     },
 });
