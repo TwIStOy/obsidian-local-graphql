@@ -83,47 +83,6 @@ export class VaultObject extends GraphQLObject<Vault> {
 		return null;
 	}
 
-	_fileFromPath(path: string) {
-		let ob = this._ob.getAbstractFileByPath(path);
-		if (ob && ob instanceof TFile) {
-			return ob;
-		}
-		return null;
-	}
-
-	fileContent(args: { path: string }) {
-		let ob = this._fileFromPath(args.path);
-		if (ob) {
-			return this._ob.read(ob);
-		}
-		return null;
-	}
-
-	async cachedFileContent(args: { path: string }) {
-		let ob = this._fileFromPath(args.path);
-		if (ob) {
-			return await this._ob.cachedRead(ob);
-		}
-		return null;
-	}
-
-	async fileBinary(args: { path: string }) {
-		let ob = this._fileFromPath(args.path);
-		if (ob) {
-			let data = await this._ob.readBinary(ob);
-			return Buffer.from(data).toString("base64");
-		}
-		return null;
-	}
-
-	resourcePath(args: { path: string }) {
-		let ob = this._fileFromPath(args.path);
-		if (ob) {
-			return this._ob.getResourcePath(ob);
-		}
-		return null;
-	}
-
 	allMarkdownFiles() {
 		let values = this._ob.getMarkdownFiles().map((f) => new TFileObject(f));
 		return values;

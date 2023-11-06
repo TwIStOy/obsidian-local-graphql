@@ -68,6 +68,10 @@ export class TFileObject extends GraphQLObject<TFile> {
 			t.string("basename");
 			t.string("extension");
 			t.field("stats", { type: "FileStats" });
+			t.string("readContent");
+			t.string("cachedreadContent");
+			t.string("readBinaryContent");
+			t.string("resourcePath");
 		},
 	});
 
@@ -104,6 +108,23 @@ export class TFileObject extends GraphQLObject<TFile> {
 
 	get extension() {
 		return this._ob.extension;
+	}
+
+	async readContent() {
+		return await this._ob.vault.read(this._ob);
+	}
+
+	async cachedreadContent() {
+		return await this._ob.vault.cachedRead(this._ob);
+	}
+
+	async readBinaryContent() {
+		let data = await this._ob.vault.readBinary(this._ob);
+		return Buffer.from(data).toString("base64");
+	}
+
+	resourcePath() {
+		return this._ob.vault.getResourcePath(this._ob);
 	}
 }
 
