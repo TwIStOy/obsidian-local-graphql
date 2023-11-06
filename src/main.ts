@@ -24,78 +24,19 @@ const DEFAULT_SETTINGS: LocalGraphQLSettings = {
 export default class LocalGraphQL extends Plugin {
 	settings: LocalGraphQLSettings;
 
+	refreshServerState: () => void;
+
 	async onload() {
+		this.refreshServerState = this.debounce(
+			this._restartServer.bind(this),
+			1000,
+		);
+
 		await this.loadSettings();
 
-		this._restartServer();
+		this.addSettingTab(new LocalGraphQLSettingsTab(this.app, this));
 
-		// // This creates an icon in the left ribbon.
-		// const ribbonIconEl = this.addRibbonIcon(
-		// 	"dice",
-		// 	"Sample Plugin",
-		// 	(evt: MouseEvent) => {
-		// 		// Called when the user clicks the icon.
-		// 		new Notice("This is a notice!");
-		// 	},
-		// );
-		// // Perform additional things with the ribbon
-		// ribbonIconEl.addClass("my-plugin-ribbon-class");
-		//
-		// // This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		// const statusBarItemEl = this.addStatusBarItem();
-		// statusBarItemEl.setText("Status Bar Text");
-		//
-		// // This adds a simple command that can be triggered anywhere
-		// this.addCommand({
-		// 	id: "open-sample-modal-simple",
-		// 	name: "Open sample modal (simple)",
-		// 	callback: () => {
-		// 		new SampleModal(this.app).open();
-		// 	},
-		// });
-		// // This adds an editor command that can perform some operation on the current editor instance
-		// this.addCommand({
-		// 	id: "sample-editor-command",
-		// 	name: "Sample editor command",
-		// 	editorCallback: (editor: Editor, view: MarkdownView) => {
-		// 		console.log(editor.getSelection());
-		// 		editor.replaceSelection("Sample Editor Command");
-		// 	},
-		// });
-		// // This adds a complex command that can check whether the current state of the app allows execution of the command
-		// this.addCommand({
-		// 	id: "open-sample-modal-complex",
-		// 	name: "Open sample modal (complex)",
-		// 	checkCallback: (checking: boolean) => {
-		// 		// Conditions to check
-		// 		const markdownView =
-		// 			this.app.workspace.getActiveViewOfType(MarkdownView);
-		// 		if (markdownView) {
-		// 			// If checking is true, we're simply "checking" if the command can be run.
-		// 			// If checking is false, then we want to actually perform the operation.
-		// 			if (!checking) {
-		// 				new SampleModal(this.app).open();
-		// 			}
-		//
-		// 			// This command will only show up in Command Palette when the check function returns true
-		// 			return true;
-		// 		}
-		// 	},
-		// });
-		//
-		// // This adds a settings tab so the user can configure various aspects of the plugin
-		// this.addSettingTab(new SampleSettingTab(this.app, this));
-		//
-		// // If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// // Using this function will automatically remove the event listener when this plugin is disabled.
-		// this.registerDomEvent(document, "click", (evt: MouseEvent) => {
-		// 	console.log("click", evt);
-		// });
-		//
-		// // When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		// this.registerInterval(
-		// 	window.setInterval(() => console.log("setInterval"), 5 * 60 * 1000),
-		// );
+		this.refreshServerState();
 	}
 
 	onunload() {
@@ -104,6 +45,17 @@ export default class LocalGraphQL extends Plugin {
 			this.server.stop();
 			this.server = null;
 		}
+	}
+
+	debounce<F extends (...args: any[]) => any>(
+		func: F,
+		delay: number,
+	): (...args: Parameters<F>) => void {
+		let debounceTimer: NodeJS.Timeout;
+		return (...args: Parameters<F>): void => {
+			clearTimeout(debounceTimer);
+			debounceTimer = setTimeout(() => func(...args), delay);
+		};
 	}
 
 	async loadSettings() {
@@ -134,7 +86,7 @@ export default class LocalGraphQL extends Plugin {
 			schema,
 			context,
 		});
-		this.server.listen({ port: 3000 }).then(({ url }) => {
+		this.server.listen({ port: this.settings.httpPort }).then(({ url }) => {
 			console.log(`🚀  Server ready at ${url}`);
 		});
 	}
@@ -154,11 +106,13 @@ class LocalGraphQLSettingsTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl).setName("Server Port").addText((text) =>
-			text.onChange((value) => {
-				this.plugin.settings.httpPort = parseInt(value);
-				this.plugin.saveSettings();
-				this.plugin._restartServer();
-			}),
+			text
+				.onChange((value) => {
+					this.plugin.settings.httpPort = parseInt(value);
+					this.plugin.saveSettings();
+					this.plugin.refreshServerState();
+				})
+				.setValue(this.plugin.settings.httpPort.toString()),
 		);
 	}
 }
