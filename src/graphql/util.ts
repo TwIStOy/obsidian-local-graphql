@@ -5,6 +5,8 @@ import {
 	ObjectDefinitionBlock,
 	OutputDefinitionBlock,
 	InterfaceDefinitionBlock,
+	isArray,
+	isObject,
 } from "nexus/dist/core";
 
 import { anyGraphQLObject, GraphQLObject } from "./base";
@@ -38,6 +40,7 @@ type ResolveFunctionOpt<T, FieldName> = FieldName extends Extract<
 type ObOutputDefinitionBlockFieldConf<T, FieldName extends string> = {
 	nullable?: boolean;
 	args?: Record<string, string>;
+	raw?: boolean;
 } & ResolveFunctionOpt<T, FieldName>;
 
 type ObOutputDefinitionBlockFieldDef<
@@ -50,18 +53,18 @@ type ObOutputDefinitionBlockFieldDef<
 export class ObOutputDefinitionBlock<T, TypeName extends string> {
 	constructor(public t: OutputDefinitionBlock<any>) {}
 
-	_getBlock(opts?: { nullable?: boolean }): OutputBlockType {
+	private _getBlock(opts?: { nullable?: boolean }): OutputBlockType {
 		if (opts && opts.nullable) {
 			return this.t.nullable;
 		}
 		return this.t;
 	}
 
-	_isField(key: string, obj: T): key is Extract<keyof T, string> {
+	private _isField(key: string, obj: T): key is Extract<keyof T, string> {
 		return key in obj;
 	}
 
-	_getResolve<FieldName extends string>(
+	private _getResolve<FieldName extends string>(
 		name: FieldName,
 		opts?: ObOutputDefinitionBlockFieldConf<T, FieldName>,
 		extra?: {
@@ -71,28 +74,41 @@ export class ObOutputDefinitionBlock<T, TypeName extends string> {
 		return (ob: GraphQLObject<T>, args: any, ctx: any, info: any) => {
 			let userResolve = opts?.resolve;
 
-			if (userResolve) {
-				let ret = userResolve(ob._ob, args, ctx, info);
-				if (typeof ret === "object" && "_objectName" in ret) {
-					return ret;
-				}
-				if (extra) {
-					return anyGraphQLObject(ret, extra.type);
-				}
-				return ret;
-			}
+			let ret: any;
 
-			if (this._isField(name, ob._ob)) {
-				if (extra) {
-					return anyGraphQLObject(ob._ob[name], extra.type);
+			if (userResolve) {
+				ret = userResolve(ob._ob, args, ctx, info);
+			} else if (this._isField(name, ob._ob)) {
+				if (extra && !opts?.raw) {
+					ret = anyGraphQLObject(ob._ob[name], extra.type);
 				} else {
-					return ob._ob[name];
+					ret = ob._ob[name];
 				}
 			} else {
+				if (opts?.nullable) {
+					return null;
+				}
 				throw new Error(
-					`opts and resolve cannot be null if the field is not in the object.`,
+					`opts and resolve cannot be null if the field ${name} is not in the object ${ob}.`,
 				);
 			}
+
+			if (opts?.raw) {
+				return ret;
+			}
+			// already converted
+			if (isObject(ret) && "_objectName" in ret) {
+				return ret;
+			}
+			if (extra) {
+				if (isArray(ret)) {
+					return ret.map((item) => {
+						return anyGraphQLObject(item, extra.type);
+					});
+				}
+				return anyGraphQLObject(ret, extra.type);
+			}
+			return ret;
 		};
 	}
 
@@ -123,8 +139,9 @@ export class ObOutputDefinitionBlock<T, TypeName extends string> {
 		return t.boolean(field, { resolve: resolve });
 	}
 
-	public get list() {
-		return new ObOutputDefinitionBlock<T, TypeName>(this.t.list);
+	public list(opts?: { nullable?: boolean }) {
+		let t = this._getBlock(opts);
+		return new ObOutputDefinitionBlock<T, TypeName>(t.list);
 	}
 
 	public field<FieldName extends string>(

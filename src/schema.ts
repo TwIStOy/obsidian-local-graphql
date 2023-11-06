@@ -18,6 +18,13 @@ import {
 	HeadingCacheSchema,
 	SectionCacheSchema,
 	ListItemCacheSchema,
+	CachedMetadataSchema,
+	TagCacheSchema,
+	FrontMatterCacheItemSchema,
+    FrontMatterItemValueSchema,
+    FrontmatterLinkCacheSchema,
+    BlockCacheSchema,
+    BlocksRecordItemSchema,
 } from "./graphql/cache";
 
 export const schema = makeSchema({
@@ -35,8 +42,15 @@ export const schema = makeSchema({
 		LinkCacheSchema,
 		EmbedCacheSchema,
 		HeadingCacheSchema,
+		TagCacheSchema,
 		SectionCacheSchema,
 		ListItemCacheSchema,
+		CachedMetadataSchema,
+		FrontMatterCacheItemSchema,
+		FrontMatterItemValueSchema,
+		FrontmatterLinkCacheSchema,
+		BlockCacheSchema,
+		BlocksRecordItemSchema,
 		VaultSchema,
 		// queries
 		VaultQuery,

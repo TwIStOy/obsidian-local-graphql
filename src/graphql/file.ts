@@ -1,4 +1,5 @@
 import { FileStats, TAbstractFile, TFile, TFolder } from "obsidian";
+import { Context } from "../context";
 import { registerObject } from "./base";
 
 import { obObjectType, obInterfaceType } from "./util";
@@ -54,6 +55,11 @@ export const TFileSchema = obObjectType<TFile>()({
 				return val.vault.getResourcePath(val);
 			},
 		});
+		t.field("cachedMetadata", "CachedMetadata", {
+			resolve(val, _, ctx: Context) {
+				return ctx.app.metadataCache.getFileCache(val);
+			},
+		});
 	},
 });
 
@@ -68,7 +74,7 @@ export const TFolderSchema = obObjectType<TFolder>()({
 				return val.isRoot();
 			},
 		});
-		t.list.field("children", "TAbstractFile", {
+		t.list().field("children", "TAbstractFile", {
 			resolve: (val) => {
 				return val.children;
 			},

@@ -23,7 +23,7 @@ export const VaultSchema = obObjectType<Vault>()({
 				return val.getRoot();
 			},
 		});
-		t.list.field("allLoadedFiles", "TAbstractFile", {
+		t.list().field("allLoadedFiles", "TAbstractFile", {
 			resolve(val) {
 				return val.getAllLoadedFiles();
 			},
@@ -37,12 +37,12 @@ export const VaultSchema = obObjectType<Vault>()({
 				return val.getAbstractFileByPath(args.path);
 			},
 		});
-		t.list.field("allMarkdownFiles", "TFile", {
+		t.list().field("allMarkdownFiles", "TFile", {
 			resolve(val) {
 				return val.getMarkdownFiles();
 			},
 		});
-		t.list.field("allFiles", "TFile", {
+		t.list().field("allFiles", "TFile", {
 			resolve(val) {
 				return val.getFiles();
 			},
