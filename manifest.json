@@ -3,7 +3,7 @@
 	"name": "Obsidian Local GraphQL",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Export Obsidian data as a local GraphQL server",
+	"description": "Export Obsidian data as a local GraphQL server.",
 	"author": "Hawtian Wang",
 	"authorUrl": "https://twistoy.cn",
 	"isDesktopOnly": true
