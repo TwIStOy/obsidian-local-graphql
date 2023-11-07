@@ -1,5 +1,5 @@
 {
-	"id": "obsidian-local-graphql",
+	"id": "local-graphql",
 	"name": "Obsidian Local GraphQL",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
