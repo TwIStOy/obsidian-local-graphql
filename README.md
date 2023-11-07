@@ -6,7 +6,10 @@ With the plugin, you can read, modify or delete your notes through a simple Grap
 
 # Todo
 
-[ ] Update mutations
-[ ] Delete mutations
-[ ] Subscriptions
+- [ ] Queries
+  - [x] Vault
+  - [x] MetadataCache
+- [ ] Update mutations
+- [ ] Delete mutations
+- [ ] Subscriptions
 
