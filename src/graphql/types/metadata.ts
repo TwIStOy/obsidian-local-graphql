@@ -139,51 +139,49 @@ export const ResolvedLinkItemSchema = objectType<{
 export const CachedMetadataSchema = objectType<CachedMetadata>()({
     name: "CachedMetadata",
     definition(t) {
-        t.list({ nullable: true }).field("links", {
+        t.list.field("links", {
             objectName: "LinkCache",
             resolve(val, _args, _ctx: Context, _info) {
-                return val.links;
+                return val.links ?? [];
             },
         });
-        t.list({ nullable: true }).field("embeds", {
+        t.list.field("embeds", {
             objectName: "EmbedCache",
             resolve(val) {
-                return val.embeds;
+                return val.embeds ?? [];
             },
         });
-        t.list({ nullable: true }).field("tags", {
+        t.list.field("tags", {
             objectName: "TagCache",
             resolve(val) {
-                return val.tags;
+                return val.tags ?? [];
             },
         });
-        t.list({ nullable: true }).field("headings", {
+        t.list.field("headings", {
             objectName: "HeadingCache",
             resolve(val) {
-                return val.headings;
+                return val.headings ?? [];
             },
         });
-        t.list({ nullable: true }).field("sections", {
+        t.list.field("sections", {
             objectName: "SectionCache",
             description:
                 "Sections are root level markdown blocks, which can be used to divide the document up.",
             resolve(val) {
-                return val.sections;
+                return val.sections ?? [];
             },
         });
-        t.list({ nullable: true }).field("listItems", {
+        t.list.field("listItems", {
             objectName: "ListItemCache",
             resolve(val) {
-                return val.listItems;
+                return val.listItems ?? [];
             },
         });
-        t.list({
-            nullable: true,
-        }).field("frontmatter", {
+        t.list.field("frontmatter", {
             objectName: "FrontMatterCacheItem",
             resolve(val) {
                 if (!val.frontmatter) {
-                    return null;
+                    return [];
                 }
                 let ret: {
                     key: string;
@@ -201,17 +199,17 @@ export const CachedMetadataSchema = objectType<CachedMetadata>()({
         t.field("frontmatterPosition", {
             objectName: "Pos",
         });
-        t.list({ nullable: true }).field("frontmatterLinks", {
+        t.list.field("frontmatterLinks", {
             objectName: "FrontmatterLinkCache",
             resolve(val) {
-                return val.frontmatterLinks;
+                return val.frontmatterLinks ?? [];
             },
         });
-        t.list({ nullable: true }).field("blocks", {
+        t.list.field("blocks", {
             objectName: "BlocksRecordItem",
             resolve(val) {
                 if (!val.blocks) {
-                    return null;
+                    return [];
                 }
                 let ret: {
                     key: string;
@@ -242,7 +240,7 @@ export const MetadataCacheSchema = objectType<MetadataCache>()({
                 return val.getCache(args.filePath);
             },
         });
-        t.list().field("resolvedLinks", {
+        t.list.field("resolvedLinks", {
             objectName: "ResolvedLinkItem",
             resolve(val) {
                 let links = val.resolvedLinks;
@@ -263,7 +261,7 @@ export const MetadataCacheSchema = objectType<MetadataCache>()({
                 return ret;
             },
         });
-        t.list().field("unresolvedLinks", {
+        t.list.field("unresolvedLinks", {
             objectName: "ResolvedLinkItem",
             resolve(val) {
                 let links = val.resolvedLinks;

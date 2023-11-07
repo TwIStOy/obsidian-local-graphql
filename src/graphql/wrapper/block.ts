@@ -118,6 +118,14 @@ export class OutputDefinitionBlockWrapper<T, TypeName extends string> {
         }
         return (gobj: GraphQLObject<T>, args: any, ctx: any, info: any) => {
             let ret = resolver(gobj.ob, args, ctx, info, gobj);
+            if (ret === null || ret === undefined) {
+                if (opts[0]?.nullable) {
+                    return null;
+                }
+                throw new Error(
+                    `Field ${fieldName} returned null or undefined, but it is not nullable.`
+                );
+            }
             if (objectType == "scalar") {
                 return ret;
             }
@@ -214,9 +222,8 @@ export class OutputDefinitionBlockWrapper<T, TypeName extends string> {
         });
     }
 
-    public list(opts?: { nullable?: boolean }) {
-        let t = this._resolveBlock(opts);
-        return new OutputDefinitionBlockWrapper<T, TypeName>(t.list);
+    public get list() {
+        return new OutputDefinitionBlockWrapper<T, TypeName>(this.t.list);
     }
 
     public field<FieldName extends string>(

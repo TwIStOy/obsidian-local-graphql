@@ -1,7 +1,6 @@
-import { extendType } from "nexus";
 import { FileStats, TAbstractFile, TFile, TFolder } from "obsidian";
 import { Context } from "../../context";
-import { GraphQLObject, registerObject } from "../base";
+import { registerObject } from "../base";
 import { interfaceType, objectType } from "../wrapper/block";
 
 export const FileStatsSchema = objectType<FileStats>()({
@@ -94,10 +93,10 @@ export const TFolderSchema = objectType<TFolder>()({
                 return val.isRoot();
             },
         });
-        t.list().field("children", {
+        t.list.field("children", {
             objectName: "TAbstractFile",
             resolve: (val) => {
-                return val.children;
+                return val.children ?? [];
             },
         });
     },
