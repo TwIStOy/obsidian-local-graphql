@@ -1,10 +1,10 @@
+import { extendType } from "nexus";
 import { FileStats, TAbstractFile, TFile, TFolder } from "obsidian";
-import { Context } from "../context";
-import { registerObject } from "./base";
+import { Context } from "../../context";
+import { GraphQLObject, registerObject } from "../base";
+import { interfaceType, objectType } from "../wrapper/block";
 
-import { obObjectType, obInterfaceType } from "./util";
-
-export const FileStatsSchema = obObjectType<FileStats>()({
+export const FileStatsSchema = objectType<FileStats>()({
     name: "FileStats",
     definition(t) {
         t.int("size");
@@ -13,19 +13,22 @@ export const FileStatsSchema = obObjectType<FileStats>()({
     },
 });
 
-export const TAbstractFileSchema = obInterfaceType<TAbstractFile>()({
+export const TAbstractFileSchema = interfaceType<TAbstractFile>()({
     name: "TAbstractFile",
     definition(t) {
         t.string("name");
         t.string("path");
-        t.field("vault", "Vault");
-        t.field("parent", "TFolder", {
+        t.field("vault", {
+            objectName: "Vault",
+        });
+        t.field("parent", {
+            objectName: "TFolder",
             nullable: true,
         });
     },
 });
 
-export const TFileSchema = obObjectType<TFile>()({
+export const TFileSchema = objectType<TFile>()({
     name: "TFile",
     definition(t) {
         registerObject("TFile", TFile);
@@ -33,7 +36,9 @@ export const TFileSchema = obObjectType<TFile>()({
         t.implements("TAbstractFile");
         t.string("basename");
         t.string("extension");
-        t.field("stat", "FileStats");
+        t.field("stat", {
+            objectName: "FileStats",
+        });
         t.string("readContent", {
             async resolve(val) {
                 return await val.vault.read(val);
@@ -55,11 +60,6 @@ export const TFileSchema = obObjectType<TFile>()({
                 return val.vault.getResourcePath(val);
             },
         });
-        t.field("cachedMetadata", "CachedMetadata", {
-            resolve(val, _, ctx: Context) {
-                return ctx.app.metadataCache.getFileCache(val);
-            },
-        });
         t.string("toLinkText", {
             args: {
                 sourcePath: "String",
@@ -73,10 +73,17 @@ export const TFileSchema = obObjectType<TFile>()({
                 );
             },
         });
+        t.field("cachedMetadata", {
+            objectName: "CachedMetadata",
+            nullable: true,
+            resolve(val, _, ctx: Context) {
+                return ctx.app.metadataCache.getFileCache(val);
+            },
+        });
     },
 });
 
-export const TFolderSchema = obObjectType<TFolder>()({
+export const TFolderSchema = objectType<TFolder>()({
     name: "TFolder",
     definition(t) {
         registerObject("TFolder", TFolder);
@@ -87,7 +94,8 @@ export const TFolderSchema = obObjectType<TFolder>()({
                 return val.isRoot();
             },
         });
-        t.list().field("children", "TAbstractFile", {
+        t.list().field("children", {
+            objectName: "TAbstractFile",
             resolve: (val) => {
                 return val.children;
             },
