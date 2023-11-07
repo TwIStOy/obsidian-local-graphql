@@ -52,13 +52,6 @@ type GenerateResolveFunctionOpts<T, FieldName extends string> = {
     nullable?: boolean;
 } & ResolveFunctionOpt<T, FieldName>;
 
-type GenerateResolveFunctionArgs<
-    T,
-    FieldName extends string
-> = FieldName extends Extract<keyof T, string>
-    ? [(GenerateResolveFunctionOpts<T, FieldName> | undefined)?]
-    : [GenerateResolveFunctionOpts<T, FieldName>];
-
 function isField<T>(key: string, obj: T): key is Extract<keyof T, string> {
     return key in obj;
 }
@@ -70,20 +63,20 @@ type CommonOutputDefinitionBlockFieldOpts = {
 
 type OutputDefinitionBlockWrapperScalarFieldOpts<
     T,
-    FieldName extends string
+    FieldName extends string,
 > = GenerateResolveFunctionOpts<T, FieldName> &
     CommonOutputDefinitionBlockFieldOpts;
 
 type OutputDefinitionBlockWrapperScalarFieldArgs<
     T,
-    FieldName extends string
+    FieldName extends string,
 > = FieldName extends Extract<keyof T, string>
     ? [(OutputDefinitionBlockWrapperScalarFieldOpts<T, FieldName> | undefined)?]
     : [OutputDefinitionBlockWrapperScalarFieldOpts<T, FieldName>];
 
 type OutputDefinitionBlockWrapperNotScalarFieldOpts<
     T,
-    FieldName extends string
+    FieldName extends string,
 > = GenerateResolveFunctionOpts<T, FieldName> &
     CommonOutputDefinitionBlockFieldOpts & {
         objectName: string;
@@ -108,18 +101,18 @@ export class OutputDefinitionBlockWrapper<T, TypeName extends string> {
                   objectName: string;
               }
             | "scalar",
-        ...opts: GenerateResolveFunctionArgs<T, FieldName>
+        opts: GenerateResolveFunctionOpts<T, FieldName>
     ) {
         let resolver: ResolveFunction<T>;
-        if (opts[0]?.resolve) {
-            resolver = opts[0].resolve;
+        if (opts.resolve) {
+            resolver = opts.resolve;
         } else {
-            resolver = this._generateDefaultResolveFunction(fieldName, ...opts);
+            resolver = this._generateDefaultResolveFunction(fieldName, opts);
         }
         return (gobj: GraphQLObject<T>, args: any, ctx: any, info: any) => {
             let ret = resolver(gobj.ob, args, ctx, info, gobj);
             if (ret === null || ret === undefined) {
-                if (opts[0]?.nullable) {
+                if (opts.nullable) {
                     return null;
                 }
                 throw new Error(
@@ -130,7 +123,7 @@ export class OutputDefinitionBlockWrapper<T, TypeName extends string> {
                 return ret;
             }
             return this._normalizeGraphQLObject(ret, {
-                raw: opts[0]?.raw ?? false,
+                raw: opts.raw ?? false,
                 objectName: objectType.objectName,
                 parent: gobj,
             });
@@ -139,13 +132,13 @@ export class OutputDefinitionBlockWrapper<T, TypeName extends string> {
 
     private _generateDefaultResolveFunction<FieldName extends string>(
         fieldName: FieldName,
-        ...opts: GenerateResolveFunctionArgs<T, FieldName>
+        opts: GenerateResolveFunctionOpts<T, FieldName>
     ): ResolveFunction<T> {
         return (val: T, _args: any, _ctx: Context, _info: any) => {
             if (isField(fieldName, val)) {
                 return val[fieldName];
             }
-            if (opts[0]?.nullable) {
+            if (opts.nullable) {
                 return null;
             }
             throw new Error(
@@ -183,11 +176,25 @@ export class OutputDefinitionBlockWrapper<T, TypeName extends string> {
         return new GraphQLObject(obj, opts.objectName, opts.parent);
     }
 
+    private _normalizeOpts<FieldName extends string>(
+        ...opts: OutputDefinitionBlockWrapperScalarFieldArgs<T, FieldName>
+    ): GenerateResolveFunctionOpts<T, FieldName> {
+        return {
+            raw: opts[0]?.raw ?? false,
+            nullable: opts[0]?.nullable ?? false,
+            resolve: opts[0]?.resolve as any,
+        };
+    }
+
     public int<FieldName extends string>(
         field: FieldName,
         ...opts: OutputDefinitionBlockWrapperScalarFieldArgs<T, FieldName>
     ) {
-        let resolve = this._generateResolveFunction(field, "scalar", ...opts);
+        let resolve = this._generateResolveFunction(
+            field,
+            "scalar",
+            this._normalizeOpts(...opts)
+        );
         let t = this._resolveBlock(opts[0]);
         return t.int(field, {
             args: opts[0]?.args,
@@ -200,7 +207,11 @@ export class OutputDefinitionBlockWrapper<T, TypeName extends string> {
         field: FieldName,
         ...opts: OutputDefinitionBlockWrapperScalarFieldArgs<T, FieldName>
     ) {
-        let resolve = this._generateResolveFunction(field, "scalar", ...opts);
+        let resolve = this._generateResolveFunction(
+            field,
+            "scalar",
+            this._normalizeOpts(...opts)
+        );
         let t = this._resolveBlock(opts[0]);
         return t.string(field, {
             args: opts[0]?.args,
@@ -213,7 +224,11 @@ export class OutputDefinitionBlockWrapper<T, TypeName extends string> {
         field: FieldName,
         ...opts: OutputDefinitionBlockWrapperScalarFieldArgs<T, FieldName>
     ) {
-        let resolve = this._generateResolveFunction(field, "scalar", ...opts);
+        let resolve = this._generateResolveFunction(
+            field,
+            "scalar",
+            this._normalizeOpts(...opts)
+        );
         let t = this._resolveBlock(opts[0]);
         return t.boolean(field, {
             args: opts[0]?.args,
@@ -243,7 +258,7 @@ export class OutputDefinitionBlockWrapper<T, TypeName extends string> {
 
 export class ObjectDefinitionBlockWrapper<
     T,
-    TypeName extends string
+    TypeName extends string,
 > extends OutputDefinitionBlockWrapper<T, TypeName> {
     constructor(public t: ObjectDefinitionBlock<any>) {
         super(t);
@@ -258,7 +273,7 @@ export class ObjectDefinitionBlockWrapper<
 
 export class InterfaceDefinitionBlockWrapper<
     T,
-    TypeName extends string
+    TypeName extends string,
 > extends OutputDefinitionBlockWrapper<T, TypeName> {
     constructor(public t: InterfaceDefinitionBlock<any>) {
         super(t);
