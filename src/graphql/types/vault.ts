@@ -1,4 +1,4 @@
-import { extendType } from "nexus";
+import { extendType, stringArg } from "nexus";
 import { Vault } from "obsidian";
 import { Context } from "../../context";
 import { GraphQLObject } from "../base";
@@ -65,6 +65,30 @@ export const VaultQuery = extendType({
             type: "Vault",
             resolve(_root, _args, ctx: Context) {
                 return new GraphQLObject(ctx.app.vault, "Vault");
+            },
+        });
+    },
+});
+
+export const VaultMutation = extendType({
+    type: "Mutation",
+    definition(t) {
+        t.nullable.field("createFolder", {
+            type: "TFolder",
+            description: "Create a new folder inside the vault.",
+            args: {
+                path: stringArg({
+                    description: "Vault absolute path for the new folder.",
+                }),
+            },
+            async resolve(_root, args, ctx: Context) {
+                try {
+                    let folder = await ctx.app.vault.createFolder(args.path);
+                    return new GraphQLObject(folder, "TFolder");
+                } catch (error) {
+                    console.log(error);
+                }
+                return null;
             },
         });
     },
