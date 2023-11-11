@@ -19,7 +19,7 @@ async function doSearch(
     let files = vault.getMarkdownFiles();
     let results: SearchResultContext[] = [];
     for (let file of files) {
-        let content = await val.cachedRead(file);
+        let content = await vault.cachedRead(file);
         let fileResult = search(content);
         if (fileResult) {
             results.push(new SearchResultContext(file, content, fileResult));
