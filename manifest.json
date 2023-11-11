@@ -1,7 +1,7 @@
 {
 	"id": "local-graphql",
 	"name": "Local GraphQL",
-	"version": "1.0.0",
+	"version": "1.0.2",
 	"minAppVersion": "0.15.0",
 	"description": "Export Obsidian data as a local GraphQL server.",
 	"author": "Hawtian Wang",
