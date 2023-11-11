@@ -1,8 +1,9 @@
 import { extendType, stringArg } from "nexus";
-import { Vault } from "obsidian";
+import { prepareFuzzySearch, Vault } from "obsidian";
 import { Context } from "../../context";
 import { GraphQLObject } from "../base";
 import { objectType } from "../wrapper/block";
+import { SearchResultContext } from "./search";
 
 export const VaultSchema = objectType<Vault>()({
     name: "Vault",
@@ -53,6 +54,29 @@ export const VaultSchema = objectType<Vault>()({
             description: "Get all files in the vault.",
             resolve(val) {
                 return val.getFiles() ?? [];
+            },
+        });
+        t.list.field("fuzzySearch", {
+            objectName: "SearchResultContext",
+            args: {
+                query: "String",
+            },
+            async resolve(val, args) {
+                let search = prepareFuzzySearch(args.query);
+                let files = val.getMarkdownFiles();
+                let results: SearchResultContext[] = [];
+                for (let file of files) {
+                    let content = await val.cachedRead(file);
+                    let fileResult = search(content);
+                    if (fileResult) {
+                        results.push({
+                            file,
+                            ...fileResult,
+                        });
+                    }
+                }
+                results.sort((a, b) => b.score - a.score);
+                return results;
             },
         });
     },
