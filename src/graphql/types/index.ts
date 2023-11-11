@@ -5,13 +5,13 @@ import * as FileSchemas from "./file";
 import * as VaultSchemas from "./vault";
 import * as SearchSchemas from "./search";
 
-export const AllSchemas: any[] = [
+export default [
     BasicSchemas,
     CacheSchemas,
     MetadataSchemas,
     FileSchemas,
     VaultSchemas,
-	SearchSchemas,
+    SearchSchemas,
 ]
     .map((x) => Object.values(x))
     .flat();

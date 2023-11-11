@@ -1,9 +1,33 @@
 import { extendType, stringArg } from "nexus";
-import { prepareFuzzySearch, Vault } from "obsidian";
+import {
+    prepareFuzzySearch,
+    prepareSimpleSearch,
+    SearchResult,
+    Vault,
+} from "obsidian";
 import { Context } from "../../context";
 import { GraphQLObject } from "../base";
 import { objectType } from "../wrapper/block";
 import { SearchResultContext } from "./search";
+import { map } from "fp-ts/Array";
+import { flow } from "fp-ts/lib/function";
+
+async function doSearch(
+    vault: Vault,
+    search: (text: string) => SearchResult | null
+) {
+    let files = vault.getMarkdownFiles();
+    let results: SearchResultContext[] = [];
+    for (let file of files) {
+        let content = await val.cachedRead(file);
+        let fileResult = search(content);
+        if (fileResult) {
+            results.push(new SearchResultContext(file, content, fileResult));
+        }
+    }
+    results.sort((a, b) => (a.score > b.score ? 1 : -1));
+    return results;
+}
 
 export const VaultSchema = objectType<Vault>()({
     name: "Vault",
@@ -63,20 +87,17 @@ export const VaultSchema = objectType<Vault>()({
             },
             async resolve(val, args) {
                 let search = prepareFuzzySearch(args.query);
-                let files = val.getMarkdownFiles();
-                let results: SearchResultContext[] = [];
-                for (let file of files) {
-                    let content = await val.cachedRead(file);
-                    let fileResult = search(content);
-                    if (fileResult) {
-                        results.push({
-                            file,
-                            ...fileResult,
-                        });
-                    }
-                }
-                results.sort((a, b) => b.score - a.score);
-                return results;
+                return await doSearch(val, search);
+            },
+        });
+        t.list.field("simpleSearch", {
+            objectName: "SearchResultContext",
+            args: {
+                query: "String",
+            },
+            async resolve(val, args) {
+                let search = prepareSimpleSearch(args.query);
+                return await doSearch(val, search);
             },
         });
     },
@@ -97,7 +118,7 @@ export const VaultQuery = extendType({
 export const VaultMutation = extendType({
     type: "Mutation",
     definition(t) {
-        t.nullable.field("createFolder", {
+        t.nonNull.field("createFolder", {
             type: "TFolder",
             description: "Create a new folder inside the vault.",
             args: {
@@ -111,8 +132,8 @@ export const VaultMutation = extendType({
                     return new GraphQLObject(folder, "TFolder");
                 } catch (error) {
                     console.log(error);
+                    throw error;
                 }
-                return null;
             },
         });
     },

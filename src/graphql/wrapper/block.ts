@@ -1,6 +1,7 @@
 import {
     InterfaceDefinitionBlock,
     isArray,
+    MaybePromise,
     NexusInterfaceTypeDef,
     NexusObjectTypeDef,
     ObjectDefinitionBlock,
@@ -19,7 +20,7 @@ export type ResolveFunction<T> = (
     ctx: Context,
     info: any,
     gobj: GraphQLObject<T>
-) => any;
+) => MaybePromise<any>;
 
 type NotIn<FieldName, T> = FieldName extends Extract<keyof T, string>
     ? never
@@ -109,8 +110,15 @@ export class OutputDefinitionBlockWrapper<T, TypeName extends string> {
         } else {
             resolver = this._generateDefaultResolveFunction(fieldName, opts);
         }
-        return (gobj: GraphQLObject<T>, args: any, ctx: any, info: any) => {
-            let ret = resolver(gobj.ob, args, ctx, info, gobj);
+        return async (
+            gobj: GraphQLObject<T>,
+            args: any,
+            ctx: any,
+            info: any
+        ) => {
+            let ret = await Promise.resolve(
+                resolver(gobj.ob, args, ctx, info, gobj)
+            );
             if (ret === null || ret === undefined) {
                 if (opts.nullable) {
                     return null;
@@ -197,6 +205,23 @@ export class OutputDefinitionBlockWrapper<T, TypeName extends string> {
         );
         let t = this._resolveBlock(opts[0]);
         return t.int(field, {
+            args: opts[0]?.args,
+            description: opts[0]?.description,
+            resolve: resolve,
+        });
+    }
+
+    public float<FieldName extends string>(
+        field: FieldName,
+        ...opts: OutputDefinitionBlockWrapperScalarFieldArgs<T, FieldName>
+    ) {
+        let resolve = this._generateResolveFunction(
+            field,
+            "scalar",
+            this._normalizeOpts(...opts)
+        );
+        let t = this._resolveBlock(opts[0]);
+        return t.float(field, {
             args: opts[0]?.args,
             description: opts[0]?.description,
             resolve: resolve,

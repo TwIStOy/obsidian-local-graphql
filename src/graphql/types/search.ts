@@ -1,42 +1,51 @@
-import { SearchMatchPart, SearchResult, TFile } from "obsidian";
-import { interfaceType, objectType } from "../wrapper/block";
+import { SearchResult, TFile } from "obsidian";
+import { objectType } from "../wrapper/block";
+
+export interface SearchMatchPart {
+    fromOffset: number;
+    toOffset: number;
+    text: string;
+}
 
 export const SearchMatchPartSchema = objectType<SearchMatchPart>()({
     name: "SearchMatchPart",
     definition(t) {
-        t.int("from", {
-            resolve(val) {
-                return val[0];
-            },
-        });
-        t.int("to", {
-            resolve(val) {
-                return val[1];
-            },
-        });
+        t.int("fromOffset");
+        t.int("toOffset");
+        t.string("text");
     },
 });
 
-export const SearchResultSchema = interfaceType<SearchResult>()({
-    name: "SearchResult",
-    definition(t) {
-        t.int("score");
-        t.list.field("matches", {
-            objectName: "SearchMatchPart",
-        });
-    },
-});
-
-export interface SearchResultContext extends SearchResult {
+export class SearchResultContext {
     file: TFile;
+    score: number;
+    content: string;
+    matches: SearchMatchPart[];
+
+    constructor(file: TFile, content: string, result: SearchResult) {
+        this.file = file;
+        this.score = result.score;
+        this.content = content;
+        this.matches = result.matches.map((item) => {
+            return {
+                fromOffset: item[0],
+                toOffset: item[1],
+                text: content.substring(item[0], item[1]),
+            };
+        });
+    }
 }
 
 export const SearchResultContextSchema = objectType<SearchResultContext>()({
     name: "SearchResultContext",
     definition(t) {
-        t.implements("SearchResult");
         t.field("file", {
             objectName: "TFile",
+        });
+        t.float("score");
+        t.string("content");
+        t.list.field("matches", {
+            objectName: "SearchMatchPart",
         });
     },
 });
