@@ -1,3 +1,4 @@
+import { FuseResult, FuseResultMatch } from "fuse.js";
 import { SearchResult, TFile } from "obsidian";
 import { objectType } from "../wrapper/block";
 
@@ -49,3 +50,53 @@ export const SearchResultContextSchema = objectType<SearchResultContext>()({
         });
     },
 });
+
+export const FuseResultMatchSchema = objectType<FuseResultMatch>()({
+	name: "FuseResultMatch",
+	definition(t) {
+		t.string("key", {
+			nullable: true,
+		});
+		t.string("value", {
+			nullable: true,
+		});
+		t.int("refIndex", {
+			nullable: true,
+		});
+		t.field("indices", {
+			objectName: "RawObject",
+			raw: true,
+		})
+	},
+});
+
+export const SearchAliasResultItemSchema = objectType<{
+	file: TFile,
+	aliases: string[]
+}>()({
+	name: "SearchAliasResultItem",
+	definition(t) {
+		t.field("file", {
+			objectName: "TFile",
+		});
+		t.list.string("aliases");
+	},
+});
+
+export const FuseResultSchema = objectType<FuseResult<any>>()({
+	name: "FuseResult",
+	definition(t) {
+		t.int("refIndex");
+		t.float("score", {
+			nullable: true,
+		});
+		t.list.field("matches", {
+			nullable: true,
+			objectName: "FuseResultMatch",
+		});
+		t.field("item", {
+			objectName: "SearchAliasResultItem",
+		});
+	},
+});
+

@@ -1,16 +1,22 @@
 import { extendType, stringArg } from "nexus";
 import {
+    App,
     prepareFuzzySearch,
     prepareSimpleSearch,
     SearchResult,
+    TFile,
     Vault,
 } from "obsidian";
 import { Context } from "../../context";
 import { GraphQLObject } from "../base";
 import { objectType } from "../wrapper/block";
 import { SearchResultContext } from "./search";
-import { map } from "fp-ts/Array";
-import { flow } from "fp-ts/lib/function";
+import { getFileCacheFromApp, getMarkdownFiles } from "../../helpers/file";
+import { flow, pipe } from "fp-ts/lib/function";
+import * as O from "fp-ts/lib/IO";
+import { map, filter } from "fp-ts/lib/Array";
+import * as TE from "fp-ts/lib/TaskEither";
+import Fuse from "fuse.js";
 
 async function doSearch(
     vault: Vault,
@@ -98,6 +104,39 @@ export const VaultSchema = objectType<Vault>()({
             async resolve(val, args) {
                 let search = prepareSimpleSearch(args.query);
                 return await doSearch(val, search);
+            },
+        });
+        t.list.field("searchAlias", {
+            objectName: "FuseResult",
+            args: {
+                query: "String",
+            },
+            async resolve(vault, args, ctx: Context) {
+                let getFileCachedMetadata = getFileCacheFromApp(ctx.app);
+                let processFile = (file: TFile) =>
+                    pipe(
+                        O.of(file),
+                        O.bindTo("file"),
+                        O.bind("metadata", ({ file }) =>
+                            O.of(getFileCachedMetadata(file))
+                        ),
+                        O.map(({ file, metadata }) => ({
+                            file: file,
+                            aliases:
+                                (metadata?.frontmatter?.aliases as string[]) ??
+                                [],
+                        }))
+                        // O.chain(filter((f) => f.frontmatter !== null))
+                    );
+                let res = flow(
+                    getMarkdownFiles,
+                    map(processFile)
+                )(vault).map((x) => x());
+                const fuseOptions = {
+                    keys: ["file.path", "aliases"],
+                };
+                const fuse = new Fuse(res, fuseOptions);
+                return fuse.search(args.query);
             },
         });
     },
