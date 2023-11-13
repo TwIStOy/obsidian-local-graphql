@@ -3,7 +3,7 @@ import { getProp } from "./object";
 
 export const getMarkdownFiles = (vault: Vault) => vault.getMarkdownFiles();
 
-export const cahcedRead = (vault: Vault) => (file: TFile) =>
+export const cachedRead = (vault: Vault) => (file: TFile) =>
     vault.cachedRead(file);
 
 export const getFileCacheFromApp = (app: App) => (file: TFile) =>
@@ -12,4 +12,3 @@ export const getFileCacheFromApp = (app: App) => (file: TFile) =>
 export const getFrontmatter = getProp<CachedMetadata, "frontmatter">(
     "frontmatter"
 );
-
